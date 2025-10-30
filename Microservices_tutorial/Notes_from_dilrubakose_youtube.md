@@ -27,3 +27,28 @@ __Amazon API Gateway (AWS):__ Kullanıcı isteklerinin geldiği, ihtiyaca göre 
 __Elastic Load Balance (AWS):__ İsteklerin servislere uygun yükle dağıtımını kontrol ettiğimiz bileşen.
 
 __Dependencies:__ Spring Data JPA (database için), Spring Web (Web API'lar için), Spring Boot Dev Tools, Spring Data Reactive Redis (Cache için), Spring Security, Spring for Apache Kafka (messaging için). Bunlar start.spring.io adresinden konfigure edilip indirilebilir.
+
+### Customer Authentication Service
+__api.yaml:__ Bir tür API contract gibi düşünülebilir. API call nasıl parametreler kabul ediyor, hangi parametreleri dönüyor burada konfigüre ediliyor. .yaml dosyalarını daha okunabilir görmek için `editor.swagger.io` kullanılabilir. _POST_, _GET_, _PUT_, _DELETE_
+
+API call test için `insomnia` kullanılabilir.
+
+AWS `DynamoDB` kullanarak kullanıcının mail ve şifre bilgilerini tutacak bir DB oluşturulabilir. Bu DB, kullanıcı username ve şifreyi doğru girdiğinde bir token generate edip return edecek. Bu token, kullanıcının aktif session'ında kullanılacak ve timetolive değeri dolduğunda yok edilecek. Bu nedenle tokenlar rediste tutulacak. Redis için yine AWS `Elasticache` kullanılabilir. 
+
+Tokenların timetolive kadar ömrü olması, kullanıcının token'ı başkası tarafından ele geçirildiğinde, en fazla timetolive kadar exploit edilebilmesini sağlamak için bir güvenlik önlemi olması içindir. Fakat bu da kullanıcı deneyimi açısından _best practice_ değildir. Çünkü kullanıcı siteyi aktif kullanıyorken birden timeout olup log out edilip tekrar kullanıcı adı ve şifre girmesi istenmesi kötü bir deneyim olur. Buna bir çözüm olarak ikinci ve daha uzun ömürlü bir token yaratılıp, authentication token'ı expire olduğunda onu refresh etmek kullanılabilir. 
+
+### Product Service
+
+Önemli bir nokta: sorgularda pagination kullanımı
+
+### Order Service
+Java ile service'leri implement ederken spring annotation'lar kullanılıyor. Spring kursunda bunlar dikkatli takip edilmeli.
+
+Model, Controller ve Service gibi katmanlı olarak geliştirme yapmak çoğu durumda best practice.
+
+Testler için amazon RDS üzerinden database'ler oluşturulabilir.
+
+## AWS Deployment
+__Docker:__ Geliştirilen uygulamanın build ve deploy adımlarını tanımlamaya yarıyor.
+
+__Kubernetes:__ Docker ile containerized edilmiş projelerin konfigürasyonu, ölçeklenmesi gibi konularda kullanılıyor. Amazon Elastic Kubernetes Service ile cluster oluşturup, clusterda nodelar tanımlayıp, bu nodelarda deploymentlar yapılır. 
