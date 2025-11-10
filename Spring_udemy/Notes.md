@@ -80,3 +80,72 @@ ORM (Object Relational Mapping), nesne yönelimli programlama dillerinde kullan�
 DTO (Data Transfer Object), uygulamalar arasında veri taşımak için kullanılan bir tasarım desenidir. DTO'lar, genellikle veri tabanından alınan verileri veya API istek/yanıtlarını temsil eden basit nesnelerdir. DTO'lar, veri taşıma işlemlerini optimize etmek ve gereksiz veri yükünü azaltmak için kullanılır. Örneğin, bir kullanıcı varlığı (entity) sınıfı birçok alan içerebilir, ancak bir API yanıtında yalnızca belirli alanların gönderilmesi gerekebilir. Bu durumda, bir DTO sınıfı oluşturularak sadece gerekli alanlar taşınabilir.
 
 - @Query: Bu anotasyon, Spring Data JPA'da özel sorgular tanımlamak için kullanılır. @Query anotasyonu ile JPQL (Java Persistence Query Language) veya SQL sorguları yazılabilir ve bu sorgular belirli bir metoda atanabilir. Bu sayede, geliştiriciler karmaşık sorguları kolayca tanımlayabilir ve veri erişim işlemlerini özelleştirebilir. HQL: (Hibernate Query Language), Hibernate tarafından kullanılan bir sorgulama dilidir. HQL, SQL'e benzer bir sözdizimine sahiptir ancak nesne yönelimli programlama kavramlarını kullanır. HQL, veritabanı tabloları yerine varlık (entity) sınıfları ve onların özellikleri üzerinde sorgular yapmayı sağlar. Bu sayede, geliştiriciler veritabanı işlemlerini nesneler üzerinden gerçekleştirebilir ve SQL sorgularını manuel olarak yazma ihtiyacını azaltır. (nativeQuery=true ile SQL sorgusu da yazılabilir).
+
+### Validation Anotationları
+Spring Boot uygulamalarında veri doğrulama (validation) işlemleri için çeşitli anotasyonlar kullanılır. Bu anotasyonlar, kullanıcıdan alınan verilerin belirli kurallara uygun olup olmadığını kontrol etmek için kullanılır. İşte yaygın olarak kullanılan bazı validation anotasyonları:
+- @NotNull: Bu anotasyon, bir alanın null olamayacağını belirtir.
+- @Size: Bu anotasyon, bir koleksiyonun, dizinin veya String'in minimum ve maksimum boyutunu belirler.
+- @Min ve @Max: Bu anotasyonlar, sayısal alanların minimum ve maksimum değerlerini belirler.
+- @Email: Bu anotasyon, bir String alanın geçerli bir e-posta adresi formatında olmasını sağlar.
+- @Pattern: Bu anotasyon, bir String alanın belirli bir düzenli ifade (regex) ile eşleşmesini sağlar.
+
+pom.xml dosyasına aşağıdaki bağımlılık eklenmelidir:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+Bir validation hata fırlattığında bu MethodArgumentNotValidException hatasıdır. Bunu global olarak yakalamak için @ControllerAdvice anotasyonu ile bir sınıf oluşturulabilir ve @ExceptionHandler ile bu hata işlenebilir. Örneğin:
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        // Hata işleme kodu
+        return new ResponseEntity<>("Validation error occurred", HttpStatus.BAD_REQUEST);
+    }
+}
+```
+
+Bu örnekte, GlobalExceptionHandler sınıfı tüm controller'lar için geçerli olacak şekilde yapılandırılmıştır ve MethodArgumentNotValidException hatalarını yakalar.
+
+## Exception Handling
+Spring Boot uygulamalarında hata yönetimi (exception handling) için çeşitli yöntemler kullanılabilir. En yaygın yöntemlerden biri, @ControllerAdvice anotasyonu ile global bir hata işleyici sınıfı oluşturmaktır. Bu sınıf, uygulama genelinde meydana gelen istisnaları yakalayabilir ve uygun yanıtlar döndürebilir.
+
+## Shceduled Tasks
+Spring Boot'ta zamanlanmış görevler (scheduled tasks) oluşturmak için @Scheduled anotasyonu kullanılır. Bu anotasyon, belirli aralıklarla veya belirli zamanlarda çalıştırılacak metodları tanımlamak için kullanılır. Zamanlanmış görevler, arka planda periyodik olarak çalışması gereken işlemler için idealdir. Örneğin, her 5 saniyede bir çalışan bir görev oluşturmak için aşağıdaki gibi bir sınıf tanımlanabilir:
+```java
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
+@Component
+public class ScheduledTasks {
+    @Scheduled(fixedRate = 5000)
+    public void reportCurrentTime() {
+        System.out.println("Current time: " + LocalDateTime.now());
+    }
+}
+```
+Bu örnekte, ScheduledTasks sınıfı bir bileşen (component) olarak tanımlanmıştır ve reportCurrentTime metodu her 5 saniyede bir çalıştırılır. fixedRate parametresi, metodun çalıştırılma sıklığını milisaniye cinsinden belirtir. Ayrıca, @EnableScheduling anotasyonu ile zamanlama desteği etkinleştirilmelidir. Bu anotasyon genellikle ana uygulama sınıfında kullanılır:
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
+@SpringBootApplication
+@EnableScheduling
+public class MySpringBootApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MySpringBootApplication.class, args);
+    }
+}
+```
+
+## Unit Testing with JUnit
+Spring Boot uygulamalarında birim testi (unit testing) yapmak için JUnit framework'ü yaygın olarak kullanılır. JUnit, Java programları için bir test çerçevesidir ve test senaryolarını yazmak, çalıştırmak ve sonuçları raporlamak için çeşitli araçlar sağlar. Spring Boot, JUnit ile entegrasyon sağlayarak test süreçlerini kolaylaştırır.
+- @SpringBootTest: Bu anotasyon, bir test sınıfının Spring Boot uygulama bağlamında çalıştırılmasını sağlar. Bu sayede, testler gerçek uygulama ortamına yakın bir şekilde çalıştırılabilir.
+- @Test: Bu anotasyon, bir metodun test metodu olduğunu belirtir. JUnit tarafından test olarak çalıştırılır.
+- @BeforeEach: Bu anotasyon, her test metodundan önce çalıştırılacak bir metodu belirtir. Test öncesi hazırlık işlemleri için kullanılır.
+- @AfterEach: Bu anotasyon, her test metodundan sonra çalıştırılacak bir metodu belirtir. Test sonrası temizlik işlemleri için kullanılır.
+- @MockBean: Bu anotasyon, Spring context içinde bir bean'in mock (sahte) versiyonunu oluşturmak için kullanılır. Bu sayede, bağımlılıklar izole edilebilir ve testler daha kontrollü bir şekilde gerçekleştirilebilir.
